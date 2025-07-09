@@ -1,39 +1,39 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.date import DateTrigger
 from datetime import datetime
 import requests
 import uuid
+
+# In-memory store; replace with Redis for production
+scheduled_jobs = {}
 
 scheduler = BackgroundScheduler()
 scheduler.start()
 
 
-def schedule_email(time_str: str, route: str, email_data: dict) -> str:
-    try:
-        run_time = datetime.fromisoformat(time_str)
-    except ValueError:
-        raise ValueError("Invalid ISO format")
+def schedule_email(time: str, route: str, email_data: dict):
+    dt = datetime.fromisoformat(time)
+    job_id = f"{dt.isoformat()}::{uuid.uuid4()}"
 
-    job_id = str(uuid.uuid4())
+    def job_function():
+        try:
+            print(f"Sending to: {route}")
+            response = requests.post(
+                f"https://mailassist.abusha.tech/api{route}",
+                json=email_data,
+                timeout=10
+            )
+            print(f"Response: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Error sending scheduled email: {e}")
 
-    scheduler.add_job(
-        send_email_job,
-        trigger=DateTrigger(run_date=run_time),
-        args=[route, email_data],
-        id=job_id,
-        replace_existing=True,
-    )
+        # Clean up job from memory
+        scheduled_jobs.pop(job_id, None)
+
+    scheduler.add_job(job_function, 'date', run_date=dt, id=job_id)
+    scheduled_jobs[job_id] = {
+        "time": dt,
+        "route": route,
+        "emailData": email_data
+    }
 
     return job_id
-
-
-def send_email_job(route: str, email_data: dict):
-    print(f"Sending email to {email_data.get('to')} via route {route}")
-    url = f"https://mailassist.abusha.tech/{route}"  # change if needed
-    print(f"Email data: {email_data}")
-    print(f"URL: {url}")
-    try:
-        response = requests.post(url, json=email_data)
-        print(f"Email sent to {email_data.get('to')}: {response.status_code}")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
