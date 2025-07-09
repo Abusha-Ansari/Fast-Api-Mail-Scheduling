@@ -1,11 +1,8 @@
 from pydantic import BaseModel
-from typing import Dict, Any  # Use capitalized Any
+from typing import Dict
+
 
 class SchedulePayload(BaseModel):
-    time: str
-    url: str
-    emailData: Dict[str, Any]
-
-    model_config = {
-        "arbitrary_types_allowed": True
-    }
+    time: str  # ISO format string
+    url: str   # e.g., /send
+    emailData: Dict[str, str]
