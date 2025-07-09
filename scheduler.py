@@ -28,7 +28,7 @@ def schedule_email(time_str: str, route: str, email_data: dict) -> str:
 
 
 def send_email_job(route: str, email_data: dict):
-    url = f"https://your-app-name.onrender.com/api{route}"  # change if needed
+    url = f"https://mailassist.abusha.tech/{route}"  # change if needed
     try:
         response = requests.post(url, json=email_data)
         print(f"Email sent to {email_data.get('to')}: {response.status_code}")
