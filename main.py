@@ -17,6 +17,11 @@ app.add_middleware(
 valid_routes = {"/send", "/send-batch", "/custom-mail"}
 
 
+@app.get("/")
+def root():
+    return {"status": "running"}
+
+
 @app.post("/{route}")
 async def handle_schedule(route: str, payload: SchedulePayload, request: Request):
     path = f"/{route.strip()}"
